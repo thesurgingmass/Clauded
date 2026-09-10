@@ -200,7 +200,8 @@ final class Sequencer: ObservableObject {
 
             if track.midiOut.enabled, trig.type == .note {
                 let velocity = UInt8(max(1, min(127, Int(trig.velocity * 127))))
-                midiManager?.sendNoteOn(channel: track.midiOut.channel, note: track.midiOut.note, velocity: velocity, atHostTime: adjustedHostTime)
+                let note = UInt8(max(0, min(127, track.midiOut.note)))
+                midiManager?.sendNoteOn(channel: track.midiOut.channel, note: note, velocity: velocity, atHostTime: adjustedHostTime)
             }
         }
     }
