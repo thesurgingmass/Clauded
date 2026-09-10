@@ -18,6 +18,11 @@ private struct WaveformContent: View {
     @ObservedObject var track: Track
     let trackIndex: Int
 
+    init(trackIndex: Int, track: Track) {
+        self.trackIndex = trackIndex
+        self.track = track
+    }
+
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {

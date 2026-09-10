@@ -21,6 +21,11 @@ private struct StepGridContent: View {
     let trackIndex: Int
     @State private var selectedStepIndex: Int = 0
 
+    init(trackIndex: Int, track: Track) {
+        self.trackIndex = trackIndex
+        self.track = track
+    }
+
     private var pattern: Pattern { project.activePattern }
     private var pageCount: Int { max(1, Int((Double(track.stepCount) / 16.0).rounded(.up))) }
 
