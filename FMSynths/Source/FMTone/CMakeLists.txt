@@ -46,3 +46,18 @@ target_link_libraries(FMTone
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 )
+
+if(APPLE)
+    # JUCE's own post-build steps ad-hoc sign the .vst3 bundle and *then*
+    # regenerate Contents/Resources/moduleinfo.json, which invalidates that
+    # signature's sealed resource manifest (the file changed after signing
+    # sealed it). Hosts that enforce signature integrity - Ableton Live does,
+    # Finder/`file`/`codesign --verify` without --deep don't, which made this
+    # easy to miss - reject the result with "a sealed resource is missing or
+    # invalid" / "not a plugin". Re-sign ad-hoc one more time, after
+    # everything else, so the seal covers the bundle's final contents.
+    add_custom_command(TARGET FMTone_VST3 POST_BUILD
+        COMMAND codesign --force --deep -s - "$<TARGET_BUNDLE_DIR:FMTone_VST3>"
+        COMMENT "Re-signing FM Tone.vst3 ad-hoc after moduleinfo.json regeneration"
+        VERBATIM)
+endif()

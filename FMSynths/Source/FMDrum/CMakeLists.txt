@@ -45,3 +45,13 @@ target_link_libraries(FMDrum
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 )
+
+if(APPLE)
+    # See the matching comment in Source/FMTone/CMakeLists.txt: JUCE signs the
+    # bundle and then rewrites moduleinfo.json inside it afterwards, which
+    # invalidates that signature. Re-sign ad-hoc one more time, last.
+    add_custom_command(TARGET FMDrum_VST3 POST_BUILD
+        COMMAND codesign --force --deep -s - "$<TARGET_BUNDLE_DIR:FMDrum_VST3>"
+        COMMENT "Re-signing FM Drum.vst3 ad-hoc after moduleinfo.json regeneration"
+        VERBATIM)
+endif()
