@@ -1,19 +1,22 @@
-add_library(MDShared STATIC
-    src/MDLookAndFeel.cpp
-    src/MachineEditor.cpp
-    src/MachineProcessor.cpp
-)
+# MDShared is header-only at the CMake level: the actual .cpp files are
+# compiled once per plugin target (see cmake/AddMachine.cmake), because
+# JUCE's per-target Linux dependency wiring (GTK for juce_gui_extra, etc.)
+# is only applied to targets created via juce_add_plugin -- a separate
+# static library built from these sources wouldn't receive it.
+add_library(MDShared INTERFACE)
 
-target_include_directories(MDShared PUBLIC include)
+target_include_directories(MDShared INTERFACE include)
 
-target_link_libraries(MDShared PUBLIC
+target_link_libraries(MDShared INTERFACE
     juce::juce_audio_utils
     juce::juce_audio_processors
     juce::juce_dsp
     juce::juce_gui_basics
 )
 
-target_compile_definitions(MDShared PUBLIC
-    JUCE_STRICT_REFCOUNTEDPOINTER=1
-    JUCE_DISPLAY_SPLASH_SCREEN=0
+set(MD_SHARED_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/MDLookAndFeel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/MachineEditor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/MachineProcessor.cpp
+    PARENT_SCOPE
 )

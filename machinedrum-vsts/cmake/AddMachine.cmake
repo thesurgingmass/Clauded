@@ -13,9 +13,13 @@ function(add_md_machine TARGET_NAME PRODUCT_NAME PLUGIN_CODE)
         EDITOR_WANTS_KEYBOARD_FOCUS TRUE
         VST3_CATEGORIES Instrument Drum
         COPY_PLUGIN_AFTER_BUILD FALSE
+        NEEDS_WEB_BROWSER TRUE  # Linux-only: pulls in the GTK headers
+                                # juce_gui_extra needs to compile at all.
+                                # JUCE_WEB_BROWSER=0 below disables the
+                                # actual (unused) browser feature.
     )
 
-    target_sources(${TARGET_NAME} PRIVATE ${ARGN})
+    target_sources(${TARGET_NAME} PRIVATE ${MD_SHARED_SOURCES} ${ARGN})
 
     target_link_libraries(${TARGET_NAME} PRIVATE
         MDShared

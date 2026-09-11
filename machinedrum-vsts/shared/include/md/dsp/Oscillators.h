@@ -1,5 +1,6 @@
 #pragma once
 #include <cmath>
+#include <cstdint>
 
 namespace md
 {
@@ -17,41 +18,22 @@ namespace md
 
         void setFrequency(float hz) { frequency = hz; }
 
-        float sine()
-        {
-            float v = std::sin(phase);
-            advance();
-            return v;
-        }
+        // Waveform readers are pure (no side effects) so several can be
+        // blended from the same phase within one sample; call tick() once
+        // per sample to advance.
+        float sine() const { return std::sin(phase); }
+        float triangle() const { return 2.0f * std::fabs(2.0f * (phase / twoPi) - 1.0f) - 1.0f; }
+        float saw() const { return 2.0f * (phase / twoPi) - 1.0f; }
+        float square(float pulseWidth = 0.5f) const { return (phase / twoPi) < pulseWidth ? 1.0f : -1.0f; }
 
-        float triangle()
-        {
-            float v = 2.0f * std::fabs(2.0f * (phase / twoPi) - 1.0f) - 1.0f;
-            advance();
-            return v;
-        }
-
-        float saw()
-        {
-            float v = 2.0f * (phase / twoPi) - 1.0f;
-            advance();
-            return v;
-        }
-
-        float square(float pulseWidth = 0.5f)
-        {
-            float v = (phase / twoPi) < pulseWidth ? 1.0f : -1.0f;
-            advance();
-            return v;
-        }
-
-    private:
-        void advance()
+        void tick()
         {
             phase += twoPi * frequency / (float) sampleRate;
             if (phase >= twoPi)
                 phase -= twoPi;
         }
+
+    private:
 
         double sampleRate = 44100.0;
         float phase = 0.0f;

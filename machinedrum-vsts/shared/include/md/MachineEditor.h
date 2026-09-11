@@ -38,7 +38,11 @@ namespace md
         MachineProcessor& proc;
         MDLookAndFeel lookAndFeel;
 
-        KnobRow synRow, fltRow, ampRow;
+        KnobRow synRow, tfxRow, routRow;
+
+        juce::Slider levSlider { juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::TextBoxBelow };
+        juce::Label levLabel;
+        std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> levAttachment;
 
         juce::ToggleButton kybdButton { "KYBD MODE" };
         std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> kybdAttachment;

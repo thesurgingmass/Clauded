@@ -5,11 +5,6 @@
 
 namespace md
 {
-    static juce::String toParamId(const juce::String& name)
-    {
-        return name.removeCharacters(" ").toUpperCase();
-    }
-
     MachineProcessor::MachineProcessor(MachineInfo infoIn, std::unique_ptr<MachineEngine> engineIn)
         : AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true)),
           machineInfo(std::move(infoIn)),
@@ -30,34 +25,39 @@ namespace md
                 juce::AudioParameterFloatAttributes().withLabel(p.suffix)));
         }
 
+        // --- TFX page ---
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
-            juce::ParameterID { "FLTFREQ", 1 }, "FLT FREQ",
-            juce::NormalisableRange<float>(20.0f, 20000.0f, 0.0f, 0.3f), 8000.0f, juce::AudioParameterFloatAttributes().withLabel("Hz")));
+            juce::ParameterID { "AMD", 1 }, "AMD", juce::NormalisableRange<float>(0.0f, 1.0f), 0.0f));
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
-            juce::ParameterID { "FLTRES", 1 }, "FLT RES",
-            juce::NormalisableRange<float>(0.0f, 1.0f), 0.1f));
+            juce::ParameterID { "AMF", 1 }, "AMF", juce::NormalisableRange<float>(0.1f, 30.0f, 0.0f, 0.5f), 4.0f, juce::AudioParameterFloatAttributes().withLabel("Hz")));
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
-            juce::ParameterID { "FLTATK", 1 }, "FLT ATK",
-            juce::NormalisableRange<float>(0.0f, 1.0f, 0.0f, 0.4f), 0.0f, juce::AudioParameterFloatAttributes().withLabel("s")));
+            juce::ParameterID { "EQF", 1 }, "EQF", juce::NormalisableRange<float>(60.0f, 12000.0f, 0.0f, 0.3f), 1000.0f, juce::AudioParameterFloatAttributes().withLabel("Hz")));
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
-            juce::ParameterID { "FLTDEC", 1 }, "FLT DEC",
-            juce::NormalisableRange<float>(0.005f, 2.0f, 0.0f, 0.4f), 0.15f, juce::AudioParameterFloatAttributes().withLabel("s")));
+            juce::ParameterID { "EQG", 1 }, "EQG", juce::NormalisableRange<float>(-15.0f, 15.0f), 0.0f, juce::AudioParameterFloatAttributes().withLabel("dB")));
+        params.push_back(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { "FLTF", 1 }, "FLTF", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.0f, 0.3f), 12000.0f, juce::AudioParameterFloatAttributes().withLabel("Hz")));
+        params.push_back(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { "FLTW", 1 }, "FLTW", juce::NormalisableRange<float>(0.0f, 8000.0f, 0.0f, 0.4f), 0.0f, juce::AudioParameterFloatAttributes().withLabel("Hz")));
+        params.push_back(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { "FLTQ", 1 }, "FLTQ", juce::NormalisableRange<float>(0.0f, 1.0f), 0.1f));
+        params.push_back(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { "SRR", 1 }, "SRR", juce::NormalisableRange<float>(0.0f, 1.0f), 0.0f));
 
+        // --- ROUTING page (LFOS/LFOD/LFOM omitted: LFO functionality) ---
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
-            juce::ParameterID { "AMPATK", 1 }, "AMP ATK",
-            juce::NormalisableRange<float>(0.0f, 1.0f, 0.0f, 0.4f), 0.0f, juce::AudioParameterFloatAttributes().withLabel("s")));
+            juce::ParameterID { "DIST", 1 }, "DIST", juce::NormalisableRange<float>(0.0f, 1.0f), 0.0f));
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
-            juce::ParameterID { "AMPHOLD", 1 }, "AMP HOLD",
-            juce::NormalisableRange<float>(0.0f, 1.0f, 0.0f, 0.4f), 0.0f, juce::AudioParameterFloatAttributes().withLabel("s")));
+            juce::ParameterID { "VOL", 1 }, "VOL", juce::NormalisableRange<float>(0.0f, 1.0f), 1.0f));
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
-            juce::ParameterID { "AMPDEC", 1 }, "AMP DEC",
-            juce::NormalisableRange<float>(0.005f, 3.0f, 0.0f, 0.4f), 0.3f, juce::AudioParameterFloatAttributes().withLabel("s")));
+            juce::ParameterID { "PAN", 1 }, "PAN", juce::NormalisableRange<float>(-64.0f, 63.0f), 0.0f));
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
-            juce::ParameterID { "AMPVOL", 1 }, "LEVEL",
-            juce::NormalisableRange<float>(0.0f, 1.0f), 0.8f));
+            juce::ParameterID { "DEL", 1 }, "DEL", juce::NormalisableRange<float>(0.0f, 1.0f), 0.0f));
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
-            juce::ParameterID { "AMPOD", 1 }, "OVERDRIVE",
-            juce::NormalisableRange<float>(0.0f, 1.0f), 0.0f));
+            juce::ParameterID { "REV", 1 }, "REV", juce::NormalisableRange<float>(0.0f, 1.0f), 0.0f));
+
+        // --- Physical (always-visible) track level knob ---
+        params.push_back(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { "LEV", 1 }, "LEV", juce::NormalisableRange<float>(0.0f, 1.0f), 0.85f));
 
         params.push_back(std::make_unique<juce::AudioParameterBool>(
             juce::ParameterID { "KYBD", 1 }, "KYBD MODE", false));
@@ -65,29 +65,59 @@ namespace md
         return { params.begin(), params.end() };
     }
 
-    void MachineProcessor::prepareToPlay(double sampleRate, int)
+    void MachineProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     {
+        currentSampleRate = sampleRate;
+
         engine->prepare(sampleRate);
         engine->reset();
-        filter.prepare(sampleRate);
-        filter.reset();
-        filter.setType(FilterType::LowPass);
-        filterEnv.prepare(sampleRate);
-        ampEnv.prepare(sampleRate);
+
+        tremolo.prepare(sampleRate);
+        tremolo.reset();
+        gapFilter.prepare(sampleRate);
+        gapFilter.reset();
+        srr.reset();
+
+        juce::dsp::ProcessSpec spec { sampleRate, (juce::uint32) samplesPerBlock, 1 };
+        eq.prepare(spec);
+        eq.reset();
+        lastEqFreq = lastEqGain = -1.0f;
+
+        delayL.prepare(sampleRate);
+        delayR.prepare(sampleRate);
+        delayL.reset();
+        delayR.reset();
+
+        juce::dsp::ProcessSpec stereoSpec { sampleRate, (juce::uint32) samplesPerBlock, 2 };
+        reverb.prepare(stereoSpec);
+        reverb.reset();
+        reverbScratch.setSize(2, samplesPerBlock);
+        juce::Reverb::Parameters rp;
+        rp.roomSize = 0.6f;
+        rp.damping = 0.5f;
+        rp.wetLevel = 1.0f;
+        rp.dryLevel = 0.0f;
+        rp.width = 1.0f;
+        reverb.setParameters(rp);
 
         synParamPtrs.clear();
         for (auto& p : machineInfo.synParams)
             synParamPtrs.push_back(apvts.getRawParameterValue(p.id));
 
-        fltFreq  = apvts.getRawParameterValue("FLTFREQ");
-        fltRes   = apvts.getRawParameterValue("FLTRES");
-        fltAtk   = apvts.getRawParameterValue("FLTATK");
-        fltDec   = apvts.getRawParameterValue("FLTDEC");
-        ampAtk   = apvts.getRawParameterValue("AMPATK");
-        ampHold  = apvts.getRawParameterValue("AMPHOLD");
-        ampDec   = apvts.getRawParameterValue("AMPDEC");
-        ampVol   = apvts.getRawParameterValue("AMPVOL");
-        ampOd    = apvts.getRawParameterValue("AMPOD");
+        amd      = apvts.getRawParameterValue("AMD");
+        amf      = apvts.getRawParameterValue("AMF");
+        eqf      = apvts.getRawParameterValue("EQF");
+        eqg      = apvts.getRawParameterValue("EQG");
+        fltf     = apvts.getRawParameterValue("FLTF");
+        fltw     = apvts.getRawParameterValue("FLTW");
+        fltq     = apvts.getRawParameterValue("FLTQ");
+        srrParam = apvts.getRawParameterValue("SRR");
+        dist     = apvts.getRawParameterValue("DIST");
+        vol      = apvts.getRawParameterValue("VOL");
+        pan      = apvts.getRawParameterValue("PAN");
+        del      = apvts.getRawParameterValue("DEL");
+        rev      = apvts.getRawParameterValue("REV");
+        lev      = apvts.getRawParameterValue("LEV");
         kybdMode = apvts.getRawParameterValue("KYBD");
 
         synValuesCache.assign(synParamPtrs.size(), 0.0f);
@@ -107,20 +137,27 @@ namespace md
             synValuesCache[i] = synParamPtrs[i]->load();
         engine->setSynParams(synValuesCache);
 
-        filterEnv.setTimes(fltAtk->load(), 0.0f, fltDec->load());
-        filterEnv.trigger();
-        ampEnv.setTimes(ampAtk->load(), ampHold->load(), ampDec->load());
-        ampEnv.trigger();
-
         engine->trigger(velocity01, pitchOffset);
     }
 
     void MachineProcessor::renderRange(juce::AudioBuffer<float>& buffer, int startSample, int numSamples)
     {
-        float freqHz = fltFreq->load();
-        float res    = fltRes->load();
-        float vol    = ampVol->load();
-        float od     = ampOd->load();
+        float amdV = amd->load(), amfV = amf->load();
+        float eqfV = eqf->load(), eqgV = eqg->load();
+        float fltfV = fltf->load(), fltwV = fltw->load(), fltqV = fltq->load();
+        float srrV = srrParam->load();
+        float distV = dist->load(), volV = vol->load(), panV = pan->load() / 64.0f;
+        float delV = del->load(), revV = rev->load(), levV = lev->load();
+
+        if (std::abs(eqfV - lastEqFreq) > 1.0f || std::abs(eqgV - lastEqGain) > 0.01f)
+        {
+            *eq.coefficients = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(
+                currentSampleRate, eqfV, 0.9f, juce::Decibels::decibelsToGain(eqgV));
+            lastEqFreq = eqfV;
+            lastEqGain = eqgV;
+        }
+
+        gapFilter.setParams(fltfV, fltwV, fltqV);
 
         auto* left  = buffer.getWritePointer(0);
         auto* right = buffer.getNumChannels() > 1 ? buffer.getWritePointer(1) : nullptr;
@@ -129,19 +166,42 @@ namespace md
         {
             float raw = engine->renderSample();
 
-            float envAmt = filterEnv.process();
-            float modFreq = juce::jlimit(20.0f, 20000.0f, freqHz * std::pow(2.0f, envAmt * 3.0f));
-            filter.setParams(modFreq, res);
-            float filtered = filter.process(raw);
+            float tremmed = tremolo.process(raw, amdV, amfV);
+            float filtered = gapFilter.process(tremmed);
+            float eqd = eq.processSample(filtered);
+            float crushed = srr.process(eqd, srrV);
+            float driven = distV > 0.0f ? softClip(crushed, distV) : crushed;
 
-            float amp = ampEnv.process();
-            float wet = filtered * amp * vol;
-            if (od > 0.0f)
-                wet = softClip(wet, od);
+            float wet = driven * volV * levV;
 
-            left[startSample + i] = wet;
-            if (right != nullptr)
-                right[startSample + i] = wet;
+            float l, r;
+            equalPowerPan(wet, panV, l, r);
+
+            float sendL = l * delV, sendR = r * delV;
+            float dlyL = delayL.process(sendL);
+            float dlyR = delayR.process(sendR);
+            l += dlyL;
+            r += dlyR;
+
+            left[startSample + i]  = l;
+            if (right != nullptr) right[startSample + i] = r;
+        }
+
+        if (revV > 0.0f && right != nullptr)
+        {
+            // reverbScratch is pre-sized to samplesPerBlock in prepareToPlay,
+            // so this never allocates on the audio thread.
+            for (int ch = 0; ch < 2; ++ch)
+                juce::FloatVectorOperations::copyWithMultiply(
+                    reverbScratch.getWritePointer(ch), buffer.getReadPointer(ch, startSample), revV, numSamples);
+
+            juce::dsp::AudioBlock<float> block(reverbScratch);
+            auto sub = block.getSubBlock(0, (size_t) numSamples);
+            juce::dsp::ProcessContextReplacing<float> ctx(sub);
+            reverb.process(ctx);
+
+            for (int ch = 0; ch < 2; ++ch)
+                buffer.addFrom(ch, startSample, reverbScratch, ch, 0, numSamples);
         }
     }
 
@@ -176,11 +236,9 @@ namespace md
 
     void MachineProcessor::getStateInformation(juce::MemoryBlock& destData)
     {
-        if (auto state = apvts.copyState(); true)
-        {
-            std::unique_ptr<juce::XmlElement> xml(state.createXml());
-            copyXmlToBinary(*xml, destData);
-        }
+        auto state = apvts.copyState();
+        std::unique_ptr<juce::XmlElement> xml(state.createXml());
+        copyXmlToBinary(*xml, destData);
     }
 
     void MachineProcessor::setStateInformation(const void* data, int sizeInBytes)

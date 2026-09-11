@@ -13,21 +13,29 @@ namespace md
             synIds.push_back({ sp.id, sp.name });
         buildRow(synRow, "SYN", synIds);
 
-        buildRow(fltRow, "FLT", {
-            { "FLTFREQ", "FREQ" }, { "FLTRES", "RES" }, { "FLTATK", "ATK" }, { "FLTDEC", "DEC" }
+        buildRow(tfxRow, "TFX", {
+            { "AMD", "AMD" }, { "AMF", "AMF" }, { "EQF", "EQF" }, { "EQG", "EQG" },
+            { "FLTF", "FLTF" }, { "FLTW", "FLTW" }, { "FLTQ", "FLTQ" }, { "SRR", "SRR" }
         });
 
-        buildRow(ampRow, "AMP", {
-            { "AMPATK", "ATK" }, { "AMPHOLD", "HOLD" }, { "AMPDEC", "DEC" },
-            { "AMPVOL", "LEVEL" }, { "AMPOD", "DRIVE" }
+        buildRow(routRow, "ROUT", {
+            { "DIST", "DIST" }, { "VOL", "VOL" }, { "PAN", "PAN" }, { "DEL", "DEL" }, { "REV", "REV" }
         });
+
+        levSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 56, 16);
+        addAndMakeVisible(levSlider);
+        levLabel.setText("LEV", juce::dontSendNotification);
+        levLabel.setJustificationType(juce::Justification::centred);
+        addAndMakeVisible(levLabel);
+        levAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
+            proc.apvts, "LEV", levSlider);
 
         kybdButton.setClickingTogglesState(true);
         addAndMakeVisible(kybdButton);
         kybdAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(
             proc.apvts, "KYBD", kybdButton);
 
-        setSize(780, 480);
+        setSize(820, 480);
     }
 
     MachineEditor::~MachineEditor()
@@ -43,7 +51,7 @@ namespace md
         {
             auto slider = std::make_unique<juce::Slider>(juce::Slider::RotaryHorizontalVerticalDrag,
                                                            juce::Slider::TextBoxBelow);
-            slider->setTextBoxStyle(juce::Slider::TextBoxBelow, true, 64, 16);
+            slider->setTextBoxStyle(juce::Slider::TextBoxBelow, true, 56, 16);
             addAndMakeVisible(*slider);
 
             auto label = std::make_unique<juce::Label>();
@@ -65,6 +73,8 @@ namespace md
 
         auto bounds = getLocalBounds();
         auto header = bounds.removeFromTop(64);
+        auto levArea = header.removeFromRight(80);
+        juce::ignoreUnused(levArea);
 
         // LCD-style display
         auto lcd = header.reduced(12, 8);
@@ -84,8 +94,8 @@ namespace md
         bounds.removeFromBottom(50);
         auto rowHeight = bounds.getHeight() / 3;
         paintRow(g, synRow, bounds.removeFromTop(rowHeight));
-        paintRow(g, fltRow, bounds.removeFromTop(rowHeight));
-        paintRow(g, ampRow, bounds.removeFromTop(rowHeight));
+        paintRow(g, tfxRow, bounds.removeFromTop(rowHeight));
+        paintRow(g, routRow, bounds.removeFromTop(rowHeight));
 
         g.setColour(MDLookAndFeel::chassisPanel);
         g.fillRect(getLocalBounds().removeFromBottom(50));
@@ -113,14 +123,18 @@ namespace md
     void MachineEditor::resized()
     {
         auto bounds = getLocalBounds();
-        bounds.removeFromTop(64);
+        auto header = bounds.removeFromTop(64);
+        auto levArea = header.removeFromRight(80).reduced(4);
+        levLabel.setBounds(levArea.removeFromTop(14));
+        levSlider.setBounds(levArea);
+
         auto bottom = bounds.removeFromBottom(50);
         kybdButton.setBounds(bottom.reduced(12, 10).removeFromLeft(160));
 
         auto rowHeight = bounds.getHeight() / 3;
         layoutRow(synRow, bounds.removeFromTop(rowHeight));
-        layoutRow(fltRow, bounds.removeFromTop(rowHeight));
-        layoutRow(ampRow, bounds.removeFromTop(rowHeight));
+        layoutRow(tfxRow, bounds.removeFromTop(rowHeight));
+        layoutRow(routRow, bounds.removeFromTop(rowHeight));
     }
 
     void MachineEditor::layoutRow(KnobRow& row, juce::Rectangle<int> area)
