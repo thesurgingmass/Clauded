@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure (universal: x86_64 + arm64)
+      - name: "Configure (universal: x86_64 + arm64)"
         working-directory: FMSynths
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release \
