@@ -41,7 +41,7 @@ FX page. See "Deliberate simplifications" below for the full list.
   and key-tracking.
 - A drive/saturation stage (tanh soft-clipping with level-compensated
   makeup gain).
-- 8-voice polyphony, full MIDI (note on/off, velocity, pitch bend).
+- 16-voice polyphony, full MIDI (note on/off, velocity, pitch bend).
 
 ### FM Drum
 
@@ -55,7 +55,9 @@ FX page. See "Deliberate simplifications" below for the full list.
   click/attack transient.
 - The same shared amp envelope, multimode filter (+ envelope + key-track),
   and drive stage as FM Tone.
-- 8-voice polyphony, full MIDI.
+- Monophonic: a single voice, so a new hit immediately cuts off and
+  retriggers whatever's still sounding — no layering/overlap on the same
+  drum, matching how a drum machine's voice behaves.
 
 ### Shared DSP core (`Source/Common/`)
 
@@ -76,8 +78,8 @@ envelope + key-track), and `Drive` (tanh saturation).
 - **Operator envelopes are full ADSR**, not the hardware's more nuanced
   per-stage curves/behaviors — attack/decay/"end level"(=sustain)/release
   covers the same shape without matching every curve detail.
-- **8 voices** fixed polyphony (matching the hardware's voice count);
-  not currently a user-configurable value.
+- **Fixed voice counts**: FM Tone is 16-voice polyphonic, FM Drum is
+  monophonic (1 voice); neither is currently user-configurable.
 - **GUI is functional, not skeuomorphic** — grouped rotary knobs and combo
   boxes bound to every parameter (scrollable, resizable), not a graphical
   recreation of the hardware's screen/encoder layout. All parameters are

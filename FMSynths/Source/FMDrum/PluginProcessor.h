@@ -7,7 +7,12 @@
 
 namespace fmdrum
 {
-    constexpr int numVoices = 8;
+    // Monophonic: a single voice, so a new hit immediately cuts off and
+    // retriggers whatever's still sounding (juce::Synthesiser's default note
+    // stealing does this for free - stopVoice(..., allowTailOff=false) then
+    // startVoice on the same voice), matching a drum machine's behavior of
+    // notes never overlapping/layering on the same drum.
+    constexpr int numVoices = 1;
 
     class FMDrumAudioProcessor : public juce::AudioProcessor
     {

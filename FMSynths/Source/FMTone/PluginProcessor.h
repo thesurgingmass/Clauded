@@ -7,7 +7,7 @@
 
 namespace fmtone
 {
-    constexpr int numVoices = 8; // matches the 8-voice polyphony of the hardware it's inspired by
+    constexpr int numVoices = 16;
 
     class FMToneAudioProcessor : public juce::AudioProcessor
     {
