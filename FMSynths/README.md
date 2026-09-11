@@ -87,7 +87,7 @@ envelope + key-track), and `Drive` (tanh saturation).
 ## Building
 
 Requires CMake 3.22+ and a C++17 compiler. JUCE itself is fetched
-automatically by CMake (`FetchContent`, pinned to release 7.0.12) — no
+automatically by CMake (`FetchContent`, pinned to release 8.0.15) — no
 manual JUCE install needed.
 
 ```sh

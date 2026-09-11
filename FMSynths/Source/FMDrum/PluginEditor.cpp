@@ -10,7 +10,7 @@ namespace fmdrum
         addAndMakeVisible(label);
         label.setText(labelText, juce::dontSendNotification);
         label.setJustificationType(juce::Justification::centred);
-        label.setFont(juce::Font(12.0f));
+        label.setFont(juce::FontOptions(12.0f));
         slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 18);
         attachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(apvts, paramID, slider);
     }
@@ -30,7 +30,7 @@ namespace fmdrum
         addAndMakeVisible(label);
         label.setText(labelText, juce::dontSendNotification);
         label.setJustificationType(juce::Justification::centred);
-        label.setFont(juce::Font(12.0f));
+        label.setFont(juce::FontOptions(12.0f));
 
         if (auto* param = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter(paramID)))
             combo.addItemList(param->choices, 1);
