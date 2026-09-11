@@ -93,6 +93,14 @@ namespace fmdrum
         float currentVelocity = 1.0f;
         float baseNote = 60.0f;
 
+        // Drum machines let a short trigger's amp envelope play out its full
+        // natural Attack+Decay regardless of how long the MIDI note is held -
+        // note-off only matters once the envelope would have reached Sustain.
+        // These track that: how long the note's been on, and whether a
+        // note-off is waiting to be applied once Attack+Decay finishes.
+        double samplesSinceNoteOn = 0.0;
+        bool pendingNoteOff = false;
+
         bool active = false;
     };
 }

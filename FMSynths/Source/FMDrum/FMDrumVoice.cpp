@@ -96,6 +96,8 @@ namespace fmdrum
         ampEnvelope.noteOn();
         filter.noteOn();
 
+        samplesSinceNoteOn = 0.0;
+        pendingNoteOff = false;
         active = true;
     }
 
@@ -109,9 +111,31 @@ namespace fmdrum
             // the body's audible tail at that release time regardless of the
             // user's Amp Release setting. The shared ampEnvelope below is
             // what actually shapes the release the user hears.
-            noiseEnvelope.noteOff();
+            //
+            // The amp/noise envelopes themselves only get noteOff() once
+            // they've had time to play out their natural Attack+Decay - for
+            // a short drum trigger (shorter than Decay, the common case),
+            // note-off arriving mid-decay would otherwise abandon that decay
+            // curve and jump straight to the (usually much shorter) Release
+            // stage, making Decay seem to do nothing and Release seem to
+            // fire early/wrong on every hit. Deferring it until Attack+Decay
+            // completes - checked in renderNextBlock() - means short one-shot
+            // hits always play their full decay, and Release only engages
+            // for notes actually held past that (i.e. sustain has meaning).
+            const double attackDecaySeconds =
+                static_cast<double>(params.ampEnvelope.attack) + static_cast<double>(params.ampEnvelope.decay);
+
+            if (samplesSinceNoteOn >= attackDecaySeconds * sampleRate)
+            {
+                noiseEnvelope.noteOff();
+                ampEnvelope.noteOff();
+            }
+            else
+            {
+                pendingNoteOff = true;
+            }
+
             transientEnvelope.noteOff();
-            ampEnvelope.noteOff();
             filter.noteOff();
         }
         else
@@ -132,6 +156,21 @@ namespace fmdrum
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
+            samplesSinceNoteOn += 1.0;
+
+            if (pendingNoteOff)
+            {
+                const double attackDecaySeconds =
+                    static_cast<double>(params.ampEnvelope.attack) + static_cast<double>(params.ampEnvelope.decay);
+
+                if (samplesSinceNoteOn >= attackDecaySeconds * sampleRate)
+                {
+                    noiseEnvelope.noteOff();
+                    ampEnvelope.noteOff();
+                    pendingNoteOff = false;
+                }
+            }
+
             const float pitchOffset = pitchEnvelope.getNextSample() * params.pitchEnvAmountSemitones;
             const double baseFrequency = fm::noteToFrequency(baseNote + params.bodyTuneSemitones + pitchOffset);
 

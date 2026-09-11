@@ -1,6 +1,7 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_dsp/juce_dsp.h>
 #include "FMDrumVoice.h"
 #include "FMDrumSound.h"
 #include "Parameters.h"
@@ -50,6 +51,10 @@ namespace fmdrum
     private:
         VoiceParameters voiceParameters;
         juce::Synthesiser synth;
+
+        // Final safety net against inter-voice/noise+body summing pushing
+        // past 0dBFS into hard digital clipping.
+        juce::dsp::Limiter<float> outputLimiter;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FMDrumAudioProcessor)
     };

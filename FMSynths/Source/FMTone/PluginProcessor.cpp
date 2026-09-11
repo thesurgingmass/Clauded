@@ -23,6 +23,12 @@ namespace fmtone
         for (int i = 0; i < synth.getNumVoices(); ++i)
             if (auto* voice = dynamic_cast<FMToneVoice*>(synth.getVoice(i)))
                 voice->prepare(spec);
+
+        juce::dsp::ProcessSpec limiterSpec { sampleRate, static_cast<juce::uint32>(samplesPerBlock),
+                                              static_cast<juce::uint32>(getTotalNumOutputChannels()) };
+        outputLimiter.prepare(limiterSpec);
+        outputLimiter.setThreshold(-0.3f);
+        outputLimiter.setRelease(50.0f);
     }
 
     bool FMToneAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
@@ -38,6 +44,9 @@ namespace fmtone
         updateVoiceParameters(voiceParameters, apvts);
 
         synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+
+        juce::dsp::AudioBlock<float> block(buffer);
+        outputLimiter.process(juce::dsp::ProcessContextReplacing<float>(block));
     }
 
     juce::AudioProcessorEditor* FMToneAudioProcessor::createEditor()

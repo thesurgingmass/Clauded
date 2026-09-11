@@ -58,13 +58,28 @@ FX page. See "Deliberate simplifications" below for the full list.
 - Monophonic: a single voice, so a new hit immediately cuts off and
   retriggers whatever's still sounding — no layering/overlap on the same
   drum, matching how a drum machine's voice behaves.
+- **One-shot amp/noise envelope behavior**: a short trigger (shorter than
+  Decay — the common case for sequenced drum hits) always plays out its
+  full natural Attack→Decay, uninterrupted by the MIDI note ending early.
+  Release only engages if you hold a note *past* Decay (i.e. long enough
+  to actually reach Sustain) — matching how a drum machine's amp envelope
+  behaves, rather than a synth-pad-style ADSR where note-off always cuts
+  straight to Release regardless of how far along Decay is.
 
 ### Shared DSP core (`Source/Common/`)
 
 Both plugins are built on the same small DSP library (`FMCore`):
 `FMOperator` (a phase-modulated sine operator with its own envelope and
 optional self-feedback), `MultiModeFilter` (state-variable filter +
-envelope + key-track), and `Drive` (tanh saturation).
+envelope + key-track), `Drive` (tanh saturation), and `FMLookAndFeel`
+(the shared GUI skin).
+
+Both plugins also run their final stereo output through a
+`juce::dsp::Limiter` (threshold ~-0.3dB) before it leaves the plugin.
+Individual voices are already soft-clipped by the drive stage, but with
+several voices sounding at once (16-voice FM Tone especially) the sum can
+still climb well past 0dBFS with nothing catching it — this is the safety
+net so that turns into limiting instead of hard digital clipping.
 
 ## Deliberate simplifications
 
@@ -80,11 +95,13 @@ envelope + key-track), and `Drive` (tanh saturation).
   covers the same shape without matching every curve detail.
 - **Fixed voice counts**: FM Tone is 16-voice polyphonic, FM Drum is
   monophonic (1 voice); neither is currently user-configurable.
-- **GUI is functional, not skeuomorphic** — grouped rotary knobs and combo
-  boxes bound to every parameter (scrollable, resizable), not a graphical
-  recreation of the hardware's screen/encoder layout. All parameters are
-  also exposed as regular DAW-automatable plugin parameters, so a DAW's
-  own generic editor works too.
+- **GUI is a monochrome "LCD screen" skin**, not a full recreation of the
+  hardware's physical layout — a shared `FMLookAndFeel` (lime-on-navy,
+  flat line-art knob icons, blocky monospace labels, boxed section tags)
+  applied to a straightforward scrollable/resizable list of every
+  parameter, rather than a page-by-page encoder-matched screen. All
+  parameters are also exposed as regular DAW-automatable plugin
+  parameters, so a DAW's own generic editor works too.
 
 ## Building
 
