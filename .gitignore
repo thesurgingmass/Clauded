@@ -9,3 +9,7 @@ xcuserdata/
 FMSynths/build/
 FMSynths/build-*/
 *.vst3/
+
+# FormantOne (JUCE/CMake)
+FormantOne/build/
+FormantOne/build-*/
