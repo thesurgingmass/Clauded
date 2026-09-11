@@ -2,7 +2,7 @@ juce_add_plugin(FMTone
     COMPANY_NAME                "${FM_SYNTHS_COMPANY_NAME}"
     PLUGIN_MANUFACTURER_CODE    "${FM_SYNTHS_COMPANY_CODE}"
     PLUGIN_CODE                 "Fmtn"
-    FORMATS                     VST3
+    FORMATS                     VST3 Standalone
     PRODUCT_NAME                "FM Tone"
     BUNDLE_ID                   "com.claudedaudio.fmtone"
     IS_SYNTH                    TRUE
@@ -59,5 +59,12 @@ if(APPLE)
     add_custom_command(TARGET FMTone_VST3 POST_BUILD
         COMMAND codesign --force --deep -s - "$<TARGET_BUNDLE_DIR:FMTone_VST3>"
         COMMENT "Re-signing FM Tone.vst3 ad-hoc after moduleinfo.json regeneration"
+        VERBATIM)
+
+    # Same fix for the standalone .app - it's a separate bundle target with
+    # its own copy of this same JUCE sign-then-rewrite-moduleinfo ordering.
+    add_custom_command(TARGET FMTone_Standalone POST_BUILD
+        COMMAND codesign --force --deep -s - "$<TARGET_BUNDLE_DIR:FMTone_Standalone>"
+        COMMENT "Re-signing FM Tone.app ad-hoc after moduleinfo.json regeneration"
         VERBATIM)
 endif()

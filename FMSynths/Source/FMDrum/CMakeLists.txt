@@ -2,7 +2,7 @@ juce_add_plugin(FMDrum
     COMPANY_NAME                "${FM_SYNTHS_COMPANY_NAME}"
     PLUGIN_MANUFACTURER_CODE    "${FM_SYNTHS_COMPANY_CODE}"
     PLUGIN_CODE                 "Fmdr"
-    FORMATS                     VST3
+    FORMATS                     VST3 Standalone
     PRODUCT_NAME                "FM Drum"
     BUNDLE_ID                   "com.claudedaudio.fmdrum"
     IS_SYNTH                    TRUE
@@ -53,5 +53,10 @@ if(APPLE)
     add_custom_command(TARGET FMDrum_VST3 POST_BUILD
         COMMAND codesign --force --deep -s - "$<TARGET_BUNDLE_DIR:FMDrum_VST3>"
         COMMENT "Re-signing FM Drum.vst3 ad-hoc after moduleinfo.json regeneration"
+        VERBATIM)
+
+    add_custom_command(TARGET FMDrum_Standalone POST_BUILD
+        COMMAND codesign --force --deep -s - "$<TARGET_BUNDLE_DIR:FMDrum_Standalone>"
+        COMMENT "Re-signing FM Drum.app ad-hoc after moduleinfo.json regeneration"
         VERBATIM)
 endif()
