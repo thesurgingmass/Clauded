@@ -12,7 +12,8 @@ function(add_md_machine TARGET_NAME PRODUCT_NAME PLUGIN_CODE)
         IS_MIDI_EFFECT FALSE
         EDITOR_WANTS_KEYBOARD_FOCUS TRUE
         VST3_CATEGORIES Instrument Drum
-        COPY_PLUGIN_AFTER_BUILD FALSE
+        COPY_PLUGIN_AFTER_BUILD TRUE   # installs to ~/Library/Audio/Plug-Ins/VST3
+                                        # after every build in Xcode
         NEEDS_WEB_BROWSER TRUE  # Linux-only: pulls in the GTK headers
                                 # juce_gui_extra needs to compile at all.
                                 # JUCE_WEB_BROWSER=0 below disables the
