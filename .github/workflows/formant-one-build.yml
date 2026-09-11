@@ -1,0 +1,57 @@
+name: Formant One build
+
+on:
+  push:
+    paths:
+      - "FormantOne/**"
+      - ".github/workflows/formant-one-build.yml"
+  pull_request:
+    paths:
+      - "FormantOne/**"
+      - ".github/workflows/formant-one-build.yml"
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        working-directory: FormantOne
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Formant One
+        working-directory: FormantOne
+        run: cmake --build build --target FormantOne_VST3 --config Release --parallel
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formant-one-windows-vst3
+          path: FormantOne/build/Source/FormantOne/FormantOne_artefacts/Release/VST3/**
+
+  macos-universal:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Configure (universal: x86_64 + arm64)"
+        working-directory: FormantOne
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15
+
+      - name: Build Formant One
+        working-directory: FormantOne
+        run: cmake --build build --target FormantOne_VST3 --config Release --parallel
+
+      - name: Verify universal binary
+        working-directory: FormantOne
+        run: |
+          lipo -info "build/Source/FormantOne/FormantOne_artefacts/Release/VST3/Formant One.vst3/Contents/MacOS/Formant One"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formant-one-macos-universal-vst3
+          path: FormantOne/build/Source/FormantOne/FormantOne_artefacts/Release/VST3/**
