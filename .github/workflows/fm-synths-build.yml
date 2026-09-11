@@ -1,0 +1,70 @@
+name: FM Synths build
+
+on:
+  push:
+    paths:
+      - "FMSynths/**"
+      - ".github/workflows/fm-synths-build.yml"
+  pull_request:
+    paths:
+      - "FMSynths/**"
+      - ".github/workflows/fm-synths-build.yml"
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        working-directory: FMSynths
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build FM Tone
+        working-directory: FMSynths
+        run: cmake --build build --target FMTone_VST3 --config Release --parallel
+
+      - name: Build FM Drum
+        working-directory: FMSynths
+        run: cmake --build build --target FMDrum_VST3 --config Release --parallel
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fm-synths-windows-vst3
+          path: |
+            FMSynths/build/Source/FMTone/FMTone_artefacts/Release/VST3/**
+            FMSynths/build/Source/FMDrum/FMDrum_artefacts/Release/VST3/**
+
+  macos-universal:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure (universal: x86_64 + arm64)
+        working-directory: FMSynths
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15
+
+      - name: Build FM Tone
+        working-directory: FMSynths
+        run: cmake --build build --target FMTone_VST3 --config Release --parallel
+
+      - name: Build FM Drum
+        working-directory: FMSynths
+        run: cmake --build build --target FMDrum_VST3 --config Release --parallel
+
+      - name: Verify universal binary
+        working-directory: FMSynths
+        run: |
+          lipo -info "build/Source/FMTone/FMTone_artefacts/Release/VST3/FM Tone.vst3/Contents/MacOS/FM Tone"
+          lipo -info "build/Source/FMDrum/FMDrum_artefacts/Release/VST3/FM Drum.vst3/Contents/MacOS/FM Drum"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fm-synths-macos-universal-vst3
+          path: |
+            FMSynths/build/Source/FMTone/FMTone_artefacts/Release/VST3/**
+            FMSynths/build/Source/FMDrum/FMDrum_artefacts/Release/VST3/**
