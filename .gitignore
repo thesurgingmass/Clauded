@@ -9,3 +9,7 @@ xcuserdata/
 FMSynths/build/
 FMSynths/build-*/
 *.vst3/
+
+# Vantage (JUCE/CMake)
+Vantage/build/
+Vantage/build-*/
