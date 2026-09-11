@@ -28,8 +28,11 @@ namespace md
         // --- TFX page ---
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID { "AMD", 1 }, "AMD", juce::NormalisableRange<float>(0.0f, 1.0f), 0.0f));
+        // Spans slow tremolo through to audio-rate AM (sidebands at carrier +-
+        // AMF once this gets into the hundreds of Hz and above); skewed so most
+        // of the knob's travel still covers the musically dense low end.
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
-            juce::ParameterID { "AMF", 1 }, "AMF", juce::NormalisableRange<float>(0.1f, 30.0f, 0.0f, 0.5f), 4.0f, juce::AudioParameterFloatAttributes().withLabel("Hz")));
+            juce::ParameterID { "AMF", 1 }, "AMF", juce::NormalisableRange<float>(0.1f, 10000.0f, 0.0f, 0.2f), 4.0f, juce::AudioParameterFloatAttributes().withLabel("Hz")));
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID { "EQF", 1 }, "EQF", juce::NormalisableRange<float>(60.0f, 12000.0f, 0.0f, 0.3f), 1000.0f, juce::AudioParameterFloatAttributes().withLabel("Hz")));
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
