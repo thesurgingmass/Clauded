@@ -4,3 +4,8 @@
 .DS_Store
 xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
+
+# FMSynths (JUCE/CMake)
+FMSynths/build/
+FMSynths/build-*/
+*.vst3/
