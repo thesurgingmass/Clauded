@@ -29,6 +29,11 @@ namespace fm
         setColour(juce::TextEditor::focusedOutlineColourId, ink());
 
         setColour(juce::ScrollBar::thumbColourId, ink().withAlpha(0.5f));
+
+        setColour(juce::TextButton::buttonColourId, background());
+        setColour(juce::TextButton::buttonOnColourId, ink());
+        setColour(juce::TextButton::textColourOffId, ink());
+        setColour(juce::TextButton::textColourOnId, background());
     }
 
     juce::Font FMLookAndFeel::monoFont(float size, bool bold)
@@ -42,6 +47,27 @@ namespace fm
     juce::Font FMLookAndFeel::getLabelFont(juce::Label&) { return monoFont(13.0f, true); }
     juce::Font FMLookAndFeel::getComboBoxFont(juce::ComboBox&) { return monoFont(13.0f, true); }
     juce::Font FMLookAndFeel::getPopupMenuFont() { return monoFont(13.0f, true); }
+    juce::Font FMLookAndFeel::getTextButtonFont(juce::TextButton&, int) { return monoFont(13.0f, true); }
+
+    void FMLookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Button& button, const juce::Colour&,
+                                              bool shouldDrawButtonAsHighlighted, bool)
+    {
+        // Tab-button look: a filled box when selected (toggled on), a plain
+        // outline otherwise - no rounded corners or gradients, matching the
+        // rest of this flat LCD-screen skin.
+        auto bounds = button.getLocalBounds().toFloat();
+
+        if (button.getToggleState())
+        {
+            g.setColour(ink());
+            g.fillRect(bounds);
+        }
+        else
+        {
+            g.setColour(ink().withAlpha(shouldDrawButtonAsHighlighted ? 0.7f : 0.4f));
+            g.drawRect(bounds, 1.5f);
+        }
+    }
 
     void FMLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
                                           float sliderPos, float rotaryStartAngle, float rotaryEndAngle,

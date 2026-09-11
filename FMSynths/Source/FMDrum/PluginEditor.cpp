@@ -11,7 +11,7 @@ namespace fmdrum
         label.setText(labelText.toUpperCase(), juce::dontSendNotification);
         label.setJustificationType(juce::Justification::centred);
         label.setFont(fm::FMLookAndFeel::monoFont(11.0f, true));
-        slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 74, 16);
+        slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 84, 16);
         slider.setNumDecimalPlacesToDisplay(2);
         attachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(apvts, paramID, slider);
     }
@@ -43,14 +43,10 @@ namespace fmdrum
     {
         auto bounds = getLocalBounds();
         label.setBounds(bounds.removeFromTop(16));
-        combo.setBounds(bounds.reduced(0, 8));
+        combo.setBounds(bounds.reduced(0, 10));
     }
 
     // ---- ControlSection ---------------------------------------------------
-
-    ControlSection::ControlSection(const juce::String& tagLabel) : tag(tagLabel)
-    {
-    }
 
     void ControlSection::addControl(juce::Component* control)
     {
@@ -58,34 +54,18 @@ namespace fmdrum
         addAndMakeVisible(control);
     }
 
-    void ControlSection::paint(juce::Graphics& g)
-    {
-        auto bounds = getLocalBounds();
-
-        g.setColour(fm::FMLookAndFeel::ink().withAlpha(0.25f));
-        g.drawLine((float) bounds.getX(), (float) bounds.getY(), (float) bounds.getRight(), (float) bounds.getY(), 1.0f);
-
-        auto chipArea = juce::Rectangle<int>(bounds.getX() + 4, bounds.getY() + 8, 64, chipHeight).toFloat();
-        g.setColour(fm::FMLookAndFeel::ink());
-        g.drawRect(chipArea, 1.5f);
-        g.setFont(fm::FMLookAndFeel::monoFont(12.0f, true));
-        g.drawText(tag, chipArea, juce::Justification::centred);
-    }
-
     void ControlSection::resized()
     {
-        auto bounds = getLocalBounds();
-        bounds.removeFromTop(chipHeight + 16);
-        bounds = bounds.reduced(6, 0);
-        bounds.removeFromBottom(8);
+        auto bounds = getLocalBounds().reduced(16);
 
         juce::FlexBox flex;
         flex.flexDirection = juce::FlexBox::Direction::row;
         flex.flexWrap = juce::FlexBox::Wrap::wrap;
         flex.alignContent = juce::FlexBox::AlignContent::flexStart;
+        flex.alignItems = juce::FlexBox::AlignItems::flexStart;
 
         for (auto* control : controls)
-            flex.items.add(juce::FlexItem(*control).withMinWidth(80.0f).withMinHeight(82.0f).withMargin(4.0f));
+            flex.items.add(juce::FlexItem(*control).withMinWidth(96.0f).withMinHeight(104.0f).withMargin(8.0f));
 
         flex.performLayout(bounds);
     }
@@ -144,15 +124,9 @@ namespace fmdrum
         outputSection.addControl(new ParamSlider(apvts, ParamIDs::driveAmount(), "Drive"));
         outputSection.addControl(new ParamSlider(apvts, ParamIDs::outputGain(), "Gain"));
 
-        addAndMakeVisible(viewport);
-        viewport.setViewedComponent(&content, false);
-
-        for (auto* section : sections)
-            content.addAndMakeVisible(section);
-
         setResizable(true, true);
         setResizeLimits(700, 400, 1400, 1600);
-        setSize(900, 720);
+        setSize(900, 460);
     }
 
     FMDrumAudioProcessorEditor::~FMDrumAudioProcessorEditor()
@@ -163,8 +137,26 @@ namespace fmdrum
     ControlSection& FMDrumAudioProcessorEditor::addSection(const juce::String& tagLabel)
     {
         auto* section = new ControlSection(tagLabel);
+        const int index = sections.size();
         sections.add(section);
+        addAndMakeVisible(section);
+        section->setVisible(index == 0);
+
+        auto* tab = new juce::TextButton(tagLabel);
+        tab->setClickingTogglesState(true);
+        tab->setRadioGroupId(1, juce::dontSendNotification);
+        tab->setToggleState(index == 0, juce::dontSendNotification);
+        tab->onClick = [this, index] { showSection(index); };
+        tabButtons.add(tab);
+        addAndMakeVisible(tab);
+
         return *section;
+    }
+
+    void FMDrumAudioProcessorEditor::showSection(int index)
+    {
+        for (int i = 0; i < sections.size(); ++i)
+            sections[i]->setVisible(i == index);
     }
 
     void FMDrumAudioProcessorEditor::paint(juce::Graphics& g)
@@ -204,15 +196,14 @@ namespace fmdrum
         auto area = getLocalBounds();
         headerBounds = area.removeFromTop(headerHeight);
 
-        viewport.setBounds(area);
+        auto tabBar = area.removeFromTop(tabBarHeight).reduced(8, 4);
+        juce::FlexBox tabFlex;
+        tabFlex.flexDirection = juce::FlexBox::Direction::row;
+        for (auto* tab : tabButtons)
+            tabFlex.items.add(juce::FlexItem(*tab).withFlex(1.0f).withMargin(2.0f));
+        tabFlex.performLayout(tabBar);
 
-        const int contentWidth = juce::jmax(area.getWidth() - viewport.getScrollBarThickness(), 600);
-        int y = 0;
         for (auto* section : sections)
-        {
-            section->setBounds(0, y, contentWidth, section->getPreferredHeight());
-            y += section->getPreferredHeight();
-        }
-        content.setSize(contentWidth, y);
+            section->setBounds(area);
     }
 }

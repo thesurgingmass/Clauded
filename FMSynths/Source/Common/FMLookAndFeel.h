@@ -25,9 +25,13 @@ namespace fm
                            int buttonX, int buttonY, int buttonW, int buttonH,
                            juce::ComboBox&) override;
 
+        void drawButtonBackground(juce::Graphics&, juce::Button&, const juce::Colour& backgroundColour,
+                                   bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override;
+
         juce::Font getLabelFont(juce::Label&) override;
         juce::Font getComboBoxFont(juce::ComboBox&) override;
         juce::Font getPopupMenuFont() override;
+        juce::Font getTextButtonFont(juce::TextButton&, int buttonHeight) override;
 
         static juce::Colour background() { return juce::Colour(0xff0a0e12); }
         static juce::Colour ink()        { return juce::Colour(0xffc3d732); } // the one LCD colour

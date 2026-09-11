@@ -32,21 +32,18 @@ namespace fmdrum
         std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> attachment;
     };
 
-    /** A row of controls under a small boxed section tag, LCD-page style. */
+    /** One full editor "page" of controls - only one of these is visible at a time. */
     class ControlSection : public juce::Component
     {
     public:
-        explicit ControlSection(const juce::String& tagLabel);
+        explicit ControlSection(const juce::String& tagLabel) : tag(tagLabel) {}
         void addControl(juce::Component* control); // takes ownership
         void resized() override;
-        void paint(juce::Graphics&) override;
-        int getPreferredHeight() const { return preferredHeight; }
+        const juce::String& getTag() const { return tag; }
 
     private:
         juce::String tag;
         juce::OwnedArray<juce::Component> controls;
-        int preferredHeight = 118;
-        static constexpr int chipHeight = 22;
     };
 
     class FMDrumAudioProcessorEditor : public juce::AudioProcessorEditor
@@ -62,14 +59,15 @@ namespace fmdrum
         FMDrumAudioProcessor& processorRef;
         fm::FMLookAndFeel lookAndFeel;
 
-        juce::Viewport viewport;
-        juce::Component content;
         juce::OwnedArray<ControlSection> sections;
+        juce::OwnedArray<juce::TextButton> tabButtons;
 
         juce::Rectangle<int> headerBounds;
         static constexpr int headerHeight = 56;
+        static constexpr int tabBarHeight = 40;
 
         ControlSection& addSection(const juce::String& tagLabel);
+        void showSection(int index);
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FMDrumAudioProcessorEditor)
     };
