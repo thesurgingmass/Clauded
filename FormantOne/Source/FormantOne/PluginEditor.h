@@ -1,28 +1,33 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <functional>
 #include "PluginProcessor.h"
+#include "FormantOneLookAndFeel.h"
 
 namespace formantone
 {
-    /** A label + rotary slider bound to an APVTS parameter, laid out as one unit. */
-    class ParamSlider : public juce::Component
+    /** One vertical fader bound to an APVTS float parameter, with a short
+        caption below it and a value popup that appears only while
+        dragging (matching a dense hardware-style dashboard, which doesn't
+        dedicate space to a permanent numeric readout per fader). */
+    class FaderControl : public juce::Component
     {
     public:
-        ParamSlider(juce::AudioProcessorValueTreeState& apvts, const juce::String& paramID, const juce::String& labelText);
+        FaderControl(juce::AudioProcessorValueTreeState& apvts, const juce::String& paramID, const juce::String& labelText);
         void resized() override;
 
     private:
-        juce::Slider slider { juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::TextBoxBelow };
+        juce::Slider slider { juce::Slider::LinearVertical, juce::Slider::NoTextBox };
         juce::Label label;
         std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;
     };
 
-    /** A label + combo box bound to an APVTS choice parameter. */
-    class ParamCombo : public juce::Component
+    /** A caption + combo box bound to an APVTS choice parameter. */
+    class ChoiceControl : public juce::Component
     {
     public:
-        ParamCombo(juce::AudioProcessorValueTreeState& apvts, const juce::String& paramID, const juce::String& labelText);
+        ChoiceControl(juce::AudioProcessorValueTreeState& apvts, const juce::String& paramID, const juce::String& labelText);
         void resized() override;
 
     private:
@@ -31,11 +36,11 @@ namespace formantone
         std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> attachment;
     };
 
-    /** A label + toggle button bound to an APVTS bool parameter. */
-    class ParamToggle : public juce::Component
+    /** A toggle button bound to an APVTS bool parameter. */
+    class ToggleControl : public juce::Component
     {
     public:
-        ParamToggle(juce::AudioProcessorValueTreeState& apvts, const juce::String& paramID, const juce::String& labelText);
+        ToggleControl(juce::AudioProcessorValueTreeState& apvts, const juce::String& paramID, const juce::String& labelText);
         void resized() override;
 
     private:
@@ -43,48 +48,114 @@ namespace formantone
         std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> attachment;
     };
 
-    /** A titled group of controls laid out left-to-right, wrapping onto as
-        many rows as the given width requires. */
-    class ControlSection : public juce::Component
+    /** Lays out its children in one row of equal-width slots — the basic
+        building block every panel's control strip is made of. */
+    class FaderRow : public juce::Component
     {
     public:
-        explicit ControlSection(const juce::String& title);
-        void addControl(juce::Component* control); // takes ownership
+        void addItem(juce::Component* item); // takes ownership
         void resized() override;
 
-        /** How tall this section needs to be to fit all its controls
-            (without clipping) at a given width — sections vary a lot in
-            control count here (an operator section has a dozen; the
-            balance section has two), so height can't be a fixed constant
-            the way a small, uniform control set could get away with. */
-        int computePreferredHeight(int width) const;
+    private:
+        juce::OwnedArray<juce::Component> items;
+    };
+
+    /** A titled, bordered dashboard panel — the visual chrome shared by
+        every section (Operator, Filter, LFO, ...). Subclasses fill in
+        `getContentBounds()`. */
+    class Panel : public juce::Component
+    {
+    public:
+        explicit Panel(juce::String titleText);
+        void paint(juce::Graphics&) override;
+
+        static constexpr int headerHeight = 22;
+
+    protected:
+        juce::Rectangle<int> getContentBounds() const;
 
     private:
-        juce::GroupComponent group;
-        juce::OwnedArray<juce::Component> controls;
+        juce::String title;
+    };
 
-        static constexpr int itemSize = 80;
-        static constexpr int itemMargin = 4;
-        static constexpr int horizontalPadding = 20;  // matches reduced(10, ...)
-        static constexpr int verticalPadding = 48;    // matches reduced(..., 24) top+bottom
+    /** A panel whose whole content is one row of faders/controls. */
+    class SimpleFaderPanel : public Panel
+    {
+    public:
+        explicit SimpleFaderPanel(const juce::String& titleText);
+        void addItem(juce::Component* item); // takes ownership
+        void resized() override;
+
+    private:
+        FaderRow row;
+    };
+
+    /** A panel with prev/next arrows in its header that page through N
+        near-identical items (operators, formants), showing one item's
+        FaderRow at a time — mirrors the oscillator-select arrows on
+        hardware-style synth GUIs, instead of a full tab per item. */
+    class PagedFaderPanel : public Panel
+    {
+    public:
+        PagedFaderPanel(const juce::String& titleText, int numPages, std::function<juce::String(int)> pageLabel);
+        FaderRow& getPage(int index) { return *pages[index]; }
+        void resized() override;
+
+    private:
+        void showPage(int index);
+
+        juce::OwnedArray<FaderRow> pages;
+        juce::TextButton prevButton { "<" }, nextButton { ">" };
+        juce::Label indexLabel;
+        std::function<juce::String(int)> pageLabelFn;
+        int currentPage = 0;
+    };
+
+    /** A small live-updating preview of the LFO's current waveform shape. */
+    class LfoWavePreview : public juce::Component, private juce::Timer
+    {
+    public:
+        explicit LfoWavePreview(juce::AudioProcessorValueTreeState& apvts);
+        void paint(juce::Graphics&) override;
+
+    private:
+        void timerCallback() override { repaint(); }
+        juce::AudioProcessorValueTreeState& apvts;
+    };
+
+    /** The LFO panel: shape selector + waveform preview side by side on
+        top, rate/delay/depth faders along the bottom. */
+    class LfoPanel : public Panel
+    {
+    public:
+        LfoPanel(juce::AudioProcessorValueTreeState& apvts);
+        void resized() override;
+
+    private:
+        ChoiceControl shapeControl;
+        LfoWavePreview preview;
+        FaderRow row;
     };
 
     class FormantOneAudioProcessorEditor : public juce::AudioProcessorEditor
     {
     public:
         explicit FormantOneAudioProcessorEditor(FormantOneAudioProcessor&);
+        ~FormantOneAudioProcessorEditor() override;
+
         void paint(juce::Graphics&) override;
         void resized() override;
 
     private:
         FormantOneAudioProcessor& processorRef;
+        FormantOneLookAndFeel lookAndFeel;
 
-        juce::Viewport viewport;
-        juce::Component content;
-        juce::OwnedArray<ControlSection> sections;
+        juce::OwnedArray<juce::Component> topRowPanels;
+        juce::Array<float> topRowWeights;
+        juce::OwnedArray<juce::Component> bottomRowPanels;
+        juce::Array<float> bottomRowWeights;
 
-        ControlSection& addSection(const juce::String& title);
-        void addEnvelopeControls(ControlSection& section, const juce::String& owner);
+        void layoutRow(juce::Rectangle<int> bounds, const juce::OwnedArray<juce::Component>& panels, const juce::Array<float>& weights);
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FormantOneAudioProcessorEditor)
     };

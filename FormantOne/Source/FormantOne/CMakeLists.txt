@@ -20,6 +20,8 @@ target_sources(FormantOne PRIVATE
     FormantOneVoice.h
     FormantOneVoice.cpp
     FormantOneSound.h
+    FormantOneLookAndFeel.h
+    FormantOneLookAndFeel.cpp
     Parameters.h
     Parameters.cpp
     PluginProcessor.h

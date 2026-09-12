@@ -33,20 +33,21 @@ namespace formantone
     struct EnvelopeStage
     {
         const char* idSuffix;
-        const char* label;
-        bool isTimeParam; // true = ms time control, false = 0..1 level control
+        const char* label;      // full name, used in the automation-visible parameter name
+        const char* shortLabel; // compact caption for a dense fader-strip GUI
+        bool isTimeParam;       // true = ms time control, false = 0..1 level control
     };
 
     inline const std::array<EnvelopeStage, 7>& getEnvelopeStages()
     {
         static const std::array<EnvelopeStage, 7> stages { {
-            { "attack", "Attack", true },
-            { "level1", "Level 1", false },
-            { "decay1", "Decay 1", true },
-            { "level2", "Level 2", false },
-            { "decay2", "Decay 2", true },
-            { "sustain", "Sustain", false },
-            { "release", "Release", true },
+            { "attack", "Attack", "Atk", true },
+            { "level1", "Level 1", "L1", false },
+            { "decay1", "Decay 1", "Dec1", true },
+            { "level2", "Level 2", "L2", false },
+            { "decay2", "Decay 2", "Dec2", true },
+            { "sustain", "Sustain", "Sus", false },
+            { "release", "Release", "Rel", true },
         } };
         return stages;
     }

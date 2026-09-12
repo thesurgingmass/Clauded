@@ -98,6 +98,26 @@ why this isn't an attempt at the hardware's exact 0-99 rate curve).
 | Audio-input vocoder mode | **Not implemented** — that's a hardware mic/line-input feature, out of scope for a plugin instrument |
 | System/insert effects (reverb, chorus, distortion racks) | **Not implemented** beyond the per-voice drive stage |
 
+## Interface
+
+A dense, single-screen dashboard in the spirit of hardware-style software
+synths (Surge XT, u-he's plugins, etc.) rather than a tall scrolling list
+of generic controls: dark bronze panels with a copper accent, vertical
+faders with a short caption below each one (a popup shows the exact value
+while dragging), and everything visible at once — no tabs, no scrolling.
+
+- **Operator** and **Formant** panels have prev/next arrows (like an
+  oscillator-select control) that page through the 8 operators / 3
+  formants one at a time; each page shows that operator's/formant's own
+  controls *and* its own envelope side by side, so the envelope faders
+  always match whichever one the arrows currently have selected.
+- **Algorithm**, **Filter** (+ its envelope), **LFO** (with a small live
+  waveform preview of the selected shape), **Amp Envelope**, and
+  **Balance/Output** each get their own panel, all laid out in two rows
+  that fill the window.
+- The window is resizable; panel widths scale proportionally rather than
+  reflowing into a different layout.
+
 ## Building
 
 Requires CMake 3.22+ and a C++17 compiler. JUCE itself is fetched
@@ -186,5 +206,6 @@ FormantOne/
       FormantOneSound.h
       Parameters.*             APVTS parameter layout + per-block parameter readout
       PluginProcessor.*
-      PluginEditor.*           grouped-controls GUI, generic ParamSlider/Combo/Toggle
+      FormantOneLookAndFeel.*  warm dark theme + custom vertical-fader drawing
+      PluginEditor.*           dense single-screen dashboard (see "Interface" below)
 ```
