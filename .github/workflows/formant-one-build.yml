@@ -21,14 +21,23 @@ jobs:
         working-directory: FormantOne
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
-      - name: Build Formant One
+      - name: Build Formant One (VST3)
         working-directory: FormantOne
         run: cmake --build build --target FormantOne_VST3 --config Release --parallel
+
+      - name: Build Formant One (Standalone)
+        working-directory: FormantOne
+        run: cmake --build build --target FormantOne_Standalone --config Release --parallel
 
       - uses: actions/upload-artifact@v4
         with:
           name: formant-one-windows-vst3
           path: FormantOne/build/Source/FormantOne/FormantOne_artefacts/Release/VST3/**
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formant-one-windows-standalone
+          path: FormantOne/build/Source/FormantOne/FormantOne_artefacts/Release/Standalone/**
 
   macos-universal:
     runs-on: macos-latest
@@ -42,16 +51,26 @@ jobs:
             -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" \
             -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15
 
-      - name: Build Formant One
+      - name: Build Formant One (VST3)
         working-directory: FormantOne
         run: cmake --build build --target FormantOne_VST3 --config Release --parallel
 
-      - name: Verify universal binary
+      - name: Build Formant One (Standalone)
+        working-directory: FormantOne
+        run: cmake --build build --target FormantOne_Standalone --config Release --parallel
+
+      - name: Verify universal binaries
         working-directory: FormantOne
         run: |
           lipo -info "build/Source/FormantOne/FormantOne_artefacts/Release/VST3/Formant One.vst3/Contents/MacOS/Formant One"
+          lipo -info "build/Source/FormantOne/FormantOne_artefacts/Release/Standalone/Formant One.app/Contents/MacOS/Formant One"
 
       - uses: actions/upload-artifact@v4
         with:
           name: formant-one-macos-universal-vst3
           path: FormantOne/build/Source/FormantOne/FormantOne_artefacts/Release/VST3/**
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formant-one-macos-universal-standalone
+          path: FormantOne/build/Source/FormantOne/FormantOne_artefacts/Release/Standalone/**

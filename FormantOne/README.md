@@ -116,6 +116,16 @@ The resulting plugin lands in:
 build/Source/FormantOne/FormantOne_artefacts/Release/VST3/Formant One.vst3
 ```
 
+There's also a **Standalone** app target (`FormantOne_Standalone`), a plain
+double-clickable app with the same synth engine and GUI, no DAW/VST3
+scanning involved. It's the fastest way to sanity-check that the plugin
+itself works before troubleshooting a host's plugin scan:
+
+```sh
+cmake --build build --target FormantOne_Standalone --config Release --parallel
+open "build/Source/FormantOne/FormantOne_artefacts/Release/Standalone/Formant One.app"   # macOS
+```
+
 ### Platform notes
 
 - **Windows**: builds out of the box with Visual Studio 2022 (or any

@@ -2,7 +2,7 @@ juce_add_plugin(FormantOne
     COMPANY_NAME                "${FORMANT_ONE_COMPANY_NAME}"
     PLUGIN_MANUFACTURER_CODE    "${FORMANT_ONE_COMPANY_CODE}"
     PLUGIN_CODE                 "Fmn1"
-    FORMATS                     VST3
+    FORMATS                     VST3 Standalone
     PRODUCT_NAME                "Formant One"
     BUNDLE_ID                   "com.claudedaudio.formantone"
     IS_SYNTH                    TRUE
