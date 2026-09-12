@@ -1,11 +1,17 @@
 #include "SynthVoice.h"
 #include "SynthSound.h"
+#include "ExponentialRamp.h"
 #include <cmath>
 
 namespace vantage
 {
     namespace
     {
+        float midiNoteToHz(int midiNoteNumber)
+        {
+            return static_cast<float>(juce::MidiMessage::getMidiNoteInHertz(midiNoteNumber));
+        }
+
         constexpr ModDestination oscLevelDestinations[kNumOscillators] = {
             ModDestination::Osc1Level, ModDestination::Osc2Level, ModDestination::Osc3Level
         };
@@ -70,6 +76,8 @@ namespace vantage
 
         for (int i = 0; i < kNumModMatrixSlots; ++i)
             modMatrix.setSlot(i, params.modMatrixSlots[static_cast<size_t>(i)]);
+
+        glideCoeff = exponentialRampCoefficient(params.glideTimeMs * 0.001f, sampleRate);
     }
 
     bool SynthVoice::canPlaySound(juce::SynthesiserSound* sound)
@@ -79,7 +87,11 @@ namespace vantage
 
     void SynthVoice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
     {
-        baseFrequencyHz = static_cast<float>(juce::MidiMessage::getMidiNoteInHertz(midiNoteNumber));
+        targetFrequencyHz = midiNoteToHz(midiNoteNumber);
+        if (!glideOnNextStart)
+            currentFrequencyHz = targetFrequencyHz;
+        glideOnNextStart = false;
+
         velocityGain = velocity;
         pitchWheelMoved(currentPitchWheelPosition);
 
@@ -88,6 +100,12 @@ namespace vantage
 
         for (auto& env : envelopes)
             env.noteOn();
+    }
+
+    void SynthVoice::glideToNote(int midiNoteNumber, float velocity)
+    {
+        targetFrequencyHz = midiNoteToHz(midiNoteNumber);
+        velocityGain = velocity;
     }
 
     void SynthVoice::stopNote(float, bool allowTailOff)
@@ -114,6 +132,11 @@ namespace vantage
 
     void SynthVoice::renderOneSample(float& outLeft, float& outRight)
     {
+        if (glideCoeff > 0.0f)
+            currentFrequencyHz += (1.0f - glideCoeff) * (targetFrequencyHz - currentFrequencyHz);
+        else
+            currentFrequencyHz = targetFrequencyHz;
+
         const float env3Value = envelopes[kFreeEnvIndex].renderSample();
         modMatrix.setSourceValue(ModSource::Env3, env3Value);
 
@@ -137,7 +160,7 @@ namespace vantage
             const float semitoneOffset = oscParams.coarseSemitones + oscParams.fineCents * 0.01f
                 + modMatrix.getModulation(oscPitchDestinations[i]) * kPitchModRangeSemitones
                 + pitchWheelSemitones;
-            const float freqHz = baseFrequencyHz * std::pow(2.0f, semitoneOffset / 12.0f);
+            const float freqHz = currentFrequencyHz * std::pow(2.0f, semitoneOffset / 12.0f);
 
             auto& osc = oscillators[static_cast<size_t>(i)];
             osc.setFrequency(freqHz);

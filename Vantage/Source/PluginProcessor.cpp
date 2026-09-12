@@ -40,6 +40,8 @@ namespace vantage
         updateGlobalParameters(globalParameters, apvts);
         fxEngine.setDelayParameters(globalParameters.delay);
         fxEngine.setReverbParameters(globalParameters.reverb);
+        synth.setMonoMode(globalParameters.polyphonyMode == PolyphonyMode::Mono);
+        synth.setLegato(globalParameters.legato);
 
         synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
 

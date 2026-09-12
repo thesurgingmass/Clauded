@@ -1,22 +1,11 @@
 #include "EnvelopeEngine.h"
-#include <cmath>
+#include "ExponentialRamp.h"
 
 namespace vantage
 {
     namespace
     {
         constexpr float kStageEndThreshold = 0.001f;
-    }
-
-    float EnvelopeEngine::coefficientFor(float timeSeconds, double sampleRate)
-    {
-        if (timeSeconds <= 0.0005f)
-            return 0.0f;
-
-        // Reach 99.9% of the target within `timeSeconds` (a snappy, decisive
-        // curve rather than a slow asymptotic creep).
-        constexpr float kReach = 6.9077553f; // -ln(1 - 0.999)
-        return std::exp(-kReach / (timeSeconds * static_cast<float>(sampleRate)));
     }
 
     void EnvelopeEngine::prepare(double newSampleRate)
@@ -33,9 +22,9 @@ namespace vantage
 
     void EnvelopeEngine::setParameters(float attackSeconds, float decaySeconds, float sustain01, float releaseSeconds)
     {
-        attackCoeff = coefficientFor(attackSeconds, sampleRate);
-        decayCoeff = coefficientFor(decaySeconds, sampleRate);
-        releaseCoeff = coefficientFor(releaseSeconds, sampleRate);
+        attackCoeff = exponentialRampCoefficient(attackSeconds, sampleRate);
+        decayCoeff = exponentialRampCoefficient(decaySeconds, sampleRate);
+        releaseCoeff = exponentialRampCoefficient(releaseSeconds, sampleRate);
         sustainLevel = sustain01;
     }
 

@@ -13,7 +13,7 @@ reverb sends. Built with [JUCE](https://juce.com) and CMake.
 > those companies' products. All are trademarks of their respective owners;
 > no affiliation is implied.
 
-## Status: analog modeling + SH-101 envelopes (Step 1-4 of the build plan)
+## Status: analog modeling, SH-101 envelopes, mono/legato/glide (Step 1-5)
 
 - **Oscillator models** (`OscillatorEngine`), all band-limited via PolyBLEP:
   - **Moog**: a saw with slow analog-style pitch drift (a smoothed random
@@ -49,6 +49,18 @@ reverb sends. Built with [JUCE](https://juce.com) and CMake.
   giving the fast, decisive attack and naturally-curved decay/release
   that read as "snappy" and "punchy" — the SH-101 character the brief
   asks for — rather than a flat linear ADSR.
+- **Mono/legato/glide** (`VantageSynthesiser`): in Mono mode, note-on/off
+  bypass `juce::Synthesiser`'s normal polyphonic voice-picking entirely and
+  drive voice 0 directly from a held-note stack — releasing the most
+  recent note reverts playback to whichever note is still held underneath
+  it (last-note-priority, the classic analog-mono-synth idiom). Legato
+  decides whether that transition is a seamless pitch glide with no
+  envelope retrigger, or a fresh envelope trigger; either way, pitch
+  glides between notes over `Glide Time` (an exponential portamento ramp
+  in `SynthVoice`, same curve shape as the envelopes). Retriggers go
+  through `Synthesiser`'s own protected `startVoice()`/`stopVoice()`
+  helpers rather than calling the voice directly, so the base class's
+  note-tracking stays correct even across a Mono <-> Poly mode switch.
 - **The reverb still runs `juce::dsp::Reverb`** as a stand-in for the
   eventual Supermassive-style granular/delay-network algorithm;
   `diffusion`, the two mod parameters, and the low/high cuts already exist
@@ -65,7 +77,7 @@ Vantage/
   CMakeLists.txt        Top-level: fetches JUCE, macOS universal-binary defaults.
   Source/
     CMakeLists.txt       juce_add_plugin(Vantage), FORMATS VST3 + Standalone.
-    PluginProcessor.*     juce::AudioProcessor: APVTS, 16-voice juce::Synthesiser, FXEngine.
+    PluginProcessor.*     juce::AudioProcessor: APVTS, 16-voice VantageSynthesiser, FXEngine.
     PluginEditor.*         Generic APVTS editor (placeholder, see Status above).
     Parameters.*           Full APVTS ParameterLayout + APVTS -> VoiceParameters/GlobalParameters readout.
     DSP/
@@ -81,6 +93,7 @@ Vantage/
       ModulationMatrix.*      16-slot source -> destination -> depth matrix.
       SynthVoice.*/SynthSound.h  Glues 3 oscillators + noise + 2 filters + 3 envelopes + 6 LFOs + a
                                   per-voice modulation matrix into a juce::SynthesiserVoice.
+      VantageSynthesiser.*    juce::Synthesiser subclass adding the mono/legato/glide note-stack.
       FXEngine.*              Tape delay (wow/flutter/feedback/tone) into the reverb placeholder.
 ```
 
@@ -131,11 +144,11 @@ That's 3×7 + 2 + 2×4 + 1 + 3×4 + 1 + 6×2 + 16×3 + 8 + 8 + 4 = **125
 parameters**, all host-automatable and saved/restored via
 `AudioProcessorValueTreeState::copyState()`/`replaceState()`.
 
-Mono/legato/glide and per-voice-vs-global LFO behavior are parsed into
-`GlobalParameters` already but not yet applied in the voice-stealing logic
-(`juce::Synthesiser` currently runs simple 16-voice polyphony regardless of
-`polyphonyMode`) — that's next-phase work, tracked alongside the analog
-modeling itself.
+`Glide Time` lives on `VoiceParameters` rather than `GlobalParameters` even
+though it's a "global" control conceptually, since `SynthVoice` is what
+actually needs it each block for the portamento ramp; `Polyphony Mode` and
+`Legato` stay on `GlobalParameters` since `VantageSynthesiser` (not the
+voice) is what decides mono-vs-poly note dispatch from them.
 
 ## Building
 
@@ -178,7 +191,7 @@ sudo apt install libasound2-dev libjack-jackd2-dev libx11-dev \
 - User-loadable wavetable files for the `Wavetable` oscillator model (it
   currently plays a built-in 8-frame bank rather than user-imported data).
 - The Supermassive-style granular/delay-network reverb algorithm.
-- Mono/legato/glide voice-stealing logic and per-voice-vs-global LFO mode.
+- Per-voice-vs-global LFO mode (LFOs are currently always per-voice).
 - 128 factory presets, tagged across Basses/Leads/Pads/Plucks/Keys/Synth
   Drums.
 - The custom, decluttered, Surge-XT-inspired `LookAndFeel_V4` UI.

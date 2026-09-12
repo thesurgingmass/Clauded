@@ -61,5 +61,6 @@ namespace vantage
         std::array<ModMatrixSlot, kNumModMatrixSlots> modMatrixSlots {};
 
         float masterGain = 0.8f;
+        float glideTimeMs = 0.0f; // mono-mode portamento time between notes
     };
 }

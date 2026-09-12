@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "DSP/SynthVoice.h"
 #include "DSP/SynthSound.h"
+#include "DSP/VantageSynthesiser.h"
 #include "DSP/FXEngine.h"
 #include "Parameters.h"
 
@@ -45,7 +46,7 @@ namespace vantage
         VoiceParameters voiceParameters;
         GlobalParameters globalParameters;
 
-        juce::Synthesiser synth;
+        VantageSynthesiser synth;
         FXEngine fxEngine;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VantageAudioProcessor)

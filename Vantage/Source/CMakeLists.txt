@@ -33,6 +33,7 @@ target_sources(Vantage PRIVATE
     DSP/OscillatorEngine.h
     DSP/FilterEngine.cpp
     DSP/FilterEngine.h
+    DSP/ExponentialRamp.h
     DSP/EnvelopeEngine.cpp
     DSP/EnvelopeEngine.h
     DSP/LFOEngine.cpp
@@ -42,6 +43,8 @@ target_sources(Vantage PRIVATE
     DSP/SynthSound.h
     DSP/SynthVoice.cpp
     DSP/SynthVoice.h
+    DSP/VantageSynthesiser.cpp
+    DSP/VantageSynthesiser.h
     DSP/FXEngine.cpp
     DSP/FXEngine.h
 )

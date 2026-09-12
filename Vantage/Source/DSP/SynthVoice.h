@@ -39,6 +39,21 @@ namespace vantage
         void controllerMoved(int controllerNumber, int newControllerValue) override;
         void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 
+        /**
+         * Mono-mode note entry points, used by VantageSynthesiser.
+         */
+
+        /** Arms the next startNote() call to glide pitch from wherever this
+            voice's frequency currently is, rather than snapping to the new
+            note — set just before calling the inherited Synthesiser::startVoice()
+            (via the protected helper) for a mono retrigger. Consumed (reset to
+            false) by the next startNote() call. */
+        void setGlideOnNextStart(bool shouldGlide) { glideOnNextStart = shouldGlide; }
+
+        /** True legato: changes target pitch (to glide toward) without
+            touching envelopes or oscillator phase — the sound continues. */
+        void glideToNote(int midiNoteNumber, float velocity);
+
     private:
         void applyStaticParameters();
         void renderOneSample(float& outLeft, float& outRight);
@@ -52,7 +67,10 @@ namespace vantage
 
         const VoiceParameters& params;
         double sampleRate = 44100.0;
-        float baseFrequencyHz = 440.0f;
+        float currentFrequencyHz = 440.0f;
+        float targetFrequencyHz = 440.0f;
+        float glideCoeff = 0.0f;
+        bool glideOnNextStart = false;
         float velocityGain = 1.0f;
         float pitchWheelSemitones = 0.0f;
     };

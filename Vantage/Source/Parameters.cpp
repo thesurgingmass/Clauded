@@ -234,6 +234,7 @@ namespace vantage
         }
 
         v.masterGain = raw(ParamIDs::masterGain());
+        v.glideTimeMs = raw(ParamIDs::glideTimeMs());
     }
 
     void updateGlobalParameters(GlobalParameters& g, const juce::AudioProcessorValueTreeState& apvts)
@@ -260,7 +261,6 @@ namespace vantage
 
         g.masterGain = raw(ParamIDs::masterGain());
         g.polyphonyMode = static_cast<PolyphonyMode>(static_cast<int>(raw(ParamIDs::polyphonyMode())));
-        g.glideTimeMs = raw(ParamIDs::glideTimeMs());
         g.legato = raw(ParamIDs::legato()) > 0.5f;
     }
 }

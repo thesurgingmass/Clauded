@@ -26,8 +26,6 @@ namespace vantage
     private:
         enum class Stage { Idle, Attack, Decay, Sustain, Release };
 
-        static float coefficientFor(float timeSeconds, double sampleRate);
-
         double sampleRate = 44100.0;
         Stage stage = Stage::Idle;
         float value = 0.0f;

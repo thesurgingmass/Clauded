@@ -65,14 +65,17 @@ namespace vantage
 
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
-    /** Parameters shared by the whole processor rather than owned per-voice. */
+    /**
+     * Parameters shared by the whole processor rather than owned per-voice.
+     * `glideTimeMs` (per-voice portamento) lives on VoiceParameters instead,
+     * since that's what SynthVoice itself reads each block.
+     */
     struct GlobalParameters
     {
         FXEngine::DelayParams delay;
         FXEngine::ReverbParams reverb;
         float masterGain = 0.8f;
         PolyphonyMode polyphonyMode = PolyphonyMode::Poly;
-        float glideTimeMs = 0.0f;
         bool legato = false;
     };
 
