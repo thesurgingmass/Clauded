@@ -13,31 +13,50 @@ reverb sends. Built with [JUCE](https://juce.com) and CMake.
 > those companies' products. All are trademarks of their respective owners;
 > no affiliation is implied.
 
-## Status: scaffolding (Step 1-2 of the build plan)
+## Status: analog modeling + SH-101 envelopes (Step 1-4 of the build plan)
 
-This pass lays down the full plugin skeleton so the audio graph compiles and
-passes real audio end-to-end, without yet implementing the per-manufacturer
-analog-modeling algorithms or the SH-101-style envelope curves — those are
-explicitly deferred to the next phase. Concretely, right now:
-
-- **Oscillators/filters render a working placeholder** (band-unlimited sine;
-  a state-variable lowpass) regardless of which model is selected — the
-  `OscillatorModel`/`FilterModel` enum and per-slot selection already flow
-  end to end, so swapping in the real Moog/Oberheim/Roland/Nord DSP later is
-  a matter of branching inside `OscillatorEngine::renderSample()` /
-  `FilterEngine::processSample()`, not a structural change.
-- **Envelopes are a standard `juce::ADSR`** — the SH-101 snap-curve shaping
-  is a later pass on top of the same `EnvelopeEngine` interface.
-- **The reverb runs `juce::dsp::Reverb`** as a stand-in for the eventual
-  Supermassive-style granular/delay-network algorithm; `diffusion`, the two
-  mod parameters, and the low/high cuts already exist as parameters but
-  aren't wired into the placeholder algorithm yet.
-- **The UI is JUCE's built-in generic parameter editor** (every parameter as
-  an auto-generated slider/combo box) — replaced by the custom,
-  decluttered, Surge-XT-inspired UI in a later phase.
+- **Oscillator models** (`OscillatorEngine`), all band-limited via PolyBLEP:
+  - **Moog**: a saw with slow analog-style pitch drift (a smoothed random
+    walk, ~±4 cents) for that "alive", never-quite-stable analog feel.
+  - **Oberheim**: two saws detuned ~7 cents apart and summed, evoking the
+    thick multi-oscillator unison Oberheim's synths are known for.
+  - **Roland**: a saw with a slow built-in chorus-style vibrato (~0.6 Hz,
+    ~5 cents), the subtle wobble behind the "Roland/Juno" sound.
+  - **Nord**: a clean, stable saw/square blend (70/30) — no drift or
+    wobble, the crisper "digital VA" character.
+  - **Wavetable**: frame-interpolated lookup into a built-in bank of 8
+    additive-synthesis frames (`Wavetable.h/.cpp`) morphing sine ->
+    increasingly rich saw-like spectra, scanned by `wavetablePosition`.
+    User-loadable wavetable files are still a later phase (see Roadmap).
+- **Filter models** (`FilterEngine`), all stereo, all real-time-safe
+  (no heap allocation, no `juce::dsp::IIR` coefficient objects):
+  - **Moog**: a 4-pole transistor-ladder cascade (one-pole stages with
+    `tanh` saturation at each pole, global feedback resonance) —
+    self-oscillates as resonance approaches its top.
+  - **Oberheim**: a 2-pole (12 dB/oct) zero-delay-feedback state-variable
+    filter (Andrew Simper's trapezoidal-integrator form) with a mild
+    `tanh` "growl" on the output, SEM-style.
+  - **Roland**: the same 4-pole ladder structure as Moog but with an
+    *asymmetric* soft-clip curve and a steeper (`resonance^1.5`) feedback
+    ramp — a more aggressive, "squelchy" resonance character evoking
+    OTA-ladder ICs.
+  - **Nord**: two cascaded *clean* (linear, no saturation) zero-delay
+    SVF stages for a precise 24 dB/oct response — the "surgical" digital
+    VA character, distinct from the other three's analog warmth.
+- **Envelopes** (`EnvelopeEngine`) are a custom exponential
+  attack/decay/release state machine (not `juce::ADSR`): each segment
+  asymptotically approaches its target rather than ramping linearly,
+  giving the fast, decisive attack and naturally-curved decay/release
+  that read as "snappy" and "punchy" — the SH-101 character the brief
+  asks for — rather than a flat linear ADSR.
+- **The reverb still runs `juce::dsp::Reverb`** as a stand-in for the
+  eventual Supermassive-style granular/delay-network algorithm;
+  `diffusion`, the two mod parameters, and the low/high cuts already exist
+  as parameters but aren't wired into the placeholder algorithm yet.
+- **The UI is still JUCE's built-in generic parameter editor** — replaced
+  by the custom, decluttered, Surge-XT-inspired UI in a later phase.
 - **Noise, the modulation matrix, tape delay wow/flutter, and voice
-  routing/mixing are fully implemented** — these are ordinary DSP rather
-  than per-manufacturer modeling, so there was no reason to stub them.
+  routing/mixing** were already fully implemented in the scaffolding pass.
 
 ## Architecture
 
@@ -52,10 +71,12 @@ Vantage/
     DSP/
       Constants.h/.cpp      Shared enums (models, routings, mod sources/destinations) + combo-box choice lists.
       VoiceParameters.h      Plain-data per-block parameter snapshot (no APVTS dependency) shared by every voice.
-      OscillatorEngine.*      One oscillator slot.
+      PolyBlep.h              Band-limited saw/square helpers shared by the oscillator models.
+      Wavetable.*             Built-in 8-frame additive-synthesis wavetable bank (shared, built once).
+      OscillatorEngine.*      One oscillator slot: 4 analog character models + the wavetable model.
       NoiseGenerator.*        Continuous white -> pink -> brown morph noise source.
-      FilterEngine.*          One filter slot (stereo).
-      EnvelopeEngine.*        ADSR wrapper.
+      FilterEngine.*          One filter slot (stereo): 4 real analog-style filter topologies.
+      EnvelopeEngine.*        Custom exponential attack/decay/release envelope (SH-101-style snap).
       LFOEngine.*             Multi-waveform free-running LFO.
       ModulationMatrix.*      16-slot source -> destination -> depth matrix.
       SynthVoice.*/SynthSound.h  Glues 3 oscillators + noise + 2 filters + 3 envelopes + 6 LFOs + a
@@ -154,10 +175,8 @@ sudo apt install libasound2-dev libjack-jackd2-dev libx11-dev \
 
 ## Roadmap
 
-- Per-manufacturer analog modeling for all 3 oscillator and 2 filter slots.
-- SH-101-style snappy envelope curve shaping on top of `EnvelopeEngine`.
-- User-definable wavetable engine (oscillator model `Wavetable`) with file
-  loading.
+- User-loadable wavetable files for the `Wavetable` oscillator model (it
+  currently plays a built-in 8-frame bank rather than user-imported data).
 - The Supermassive-style granular/delay-network reverb algorithm.
 - Mono/legato/glide voice-stealing logic and per-voice-vs-global LFO mode.
 - 128 factory presets, tagged across Basses/Leads/Pads/Plucks/Keys/Synth

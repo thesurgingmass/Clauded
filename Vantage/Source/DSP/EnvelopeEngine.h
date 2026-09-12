@@ -1,13 +1,13 @@
 #pragma once
 
-#include <juce_dsp/juce_dsp.h>
-
 namespace vantage
 {
     /**
-     * ADSR envelope wrapper. Runs a standard linear/exponential ADSR for now;
-     * the SH-101-style snappy attack/decay curve shaping is added on top of
-     * this same interface in a later phase.
+     * SH-101-style envelope: exponential attack/decay/release segments
+     * (each an analog-style asymptotic curve toward its target, rather than
+     * a linear ramp) with a fast, decisive attack and a natural decaying
+     * curve on release — the snappy, punchy character the hardware is
+     * known for, as opposed to a flat linear ADSR.
      */
     class EnvelopeEngine
     {
@@ -19,11 +19,22 @@ namespace vantage
 
         void noteOn();
         void noteOff();
-        bool isActive() const { return adsr.isActive(); }
+        bool isActive() const { return stage != Stage::Idle; }
 
         float renderSample();
 
     private:
-        juce::ADSR adsr;
+        enum class Stage { Idle, Attack, Decay, Sustain, Release };
+
+        static float coefficientFor(float timeSeconds, double sampleRate);
+
+        double sampleRate = 44100.0;
+        Stage stage = Stage::Idle;
+        float value = 0.0f;
+
+        float attackCoeff = 0.0f;
+        float decayCoeff = 0.0f;
+        float releaseCoeff = 0.0f;
+        float sustainLevel = 0.7f;
     };
 }

@@ -26,6 +26,9 @@ target_sources(Vantage PRIVATE
     DSP/VoiceParameters.h
     DSP/NoiseGenerator.cpp
     DSP/NoiseGenerator.h
+    DSP/PolyBlep.h
+    DSP/Wavetable.cpp
+    DSP/Wavetable.h
     DSP/OscillatorEngine.cpp
     DSP/OscillatorEngine.h
     DSP/FilterEngine.cpp
